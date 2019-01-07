@@ -1,6 +1,6 @@
 package com.bootifulmicropizza.service.account.config;
 
-import com.bootifulmicropizza.service.account.domain.User;
+import com.bootifulmicropizza.service.account.domain.UserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -68,27 +68,35 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 
             .withClient("website-client")
             .autoApprove(true)
-            .authorizedGrantTypes("password", "client_credentials")
+            .authorizedGrantTypes("password")
             .secret("website-client-secret")
             .authorities("INVENTORY_READ", "ACCOUNT_READ", "ACCOUNT_WRITE")
             .scopes("website-api-gateway", "inventory-service", "account-service")
-            .and()
 
-            .withClient("admin-client")
-            .autoApprove(true)
-            .authorizedGrantTypes("password", "client_credentials")
-            .secret("admin-client-secret")
-            .authorities("INVENTORY_READ", "INVENTORY_WRITE", "ACCOUNT_READ", "ACCOUNT_WRITE")
-            .scopes("admin-api-gateway", "inventory-service", "account-service")
             .and()
-
-            .withClient("api-client")
+            .withClient("postman")
             .autoApprove(true)
-            .authorizedGrantTypes("password", "client_credentials")
-            .secret("api-client-secret")
-            .authorities("public-api-gateway", "INVENTORY_READ", "ACCOUNT_READ", "ACCOUNT_WRITE")
-               // authorities would come from the database for the given user of the API using an API key
-            .scopes("inventory-service", "account-service");
+            .authorizedGrantTypes("client_credentials")
+            .secret("postman-secret")
+            .authorities("INVENTORY_READ", "ACCOUNT_READ", "ACCOUNT_WRITE")
+            .scopes("website-api-gateway", "inventory-service", "account-service");
+
+//            .and()
+//            .withClient("admin-client")
+//            .autoApprove(true)
+//            .authorizedGrantTypes("password", "client_credentials")
+//            .secret("admin-client-secret")
+//            .authorities("INVENTORY_READ", "INVENTORY_WRITE", "ACCOUNT_READ", "ACCOUNT_WRITE")
+//            .scopes("admin-api-gateway", "inventory-service", "account-service")
+//            .and()
+//
+//            .withClient("api-client")
+//            .autoApprove(true)
+//            .authorizedGrantTypes("password", "client_credentials")
+//            .secret("api-client-secret")
+//            .authorities("public-api-gateway", "INVENTORY_READ", "ACCOUNT_READ", "ACCOUNT_WRITE")
+//               // authorities would come from the database for the given user of the API using an API key
+//            .scopes("inventory-service", "account-service");
     }
 
     @Override
@@ -119,9 +127,9 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
             final Map<String, Object> info = new LinkedHashMap<>(accessToken.getAdditionalInformation());
 
             final Object principalObj = authentication.getPrincipal();
-            if (principalObj instanceof User) {
-                User user = (User) principalObj;
-                info.put("account_id", user.getAccountId());
+            if (principalObj instanceof UserDetails) {
+                UserDetails userDetails = (UserDetails) principalObj;
+                info.put("customer_number", userDetails.getCustomerNumber());
             }
 
             DefaultOAuth2AccessToken customAccessToken = new DefaultOAuth2AccessToken(accessToken);

@@ -1,24 +1,61 @@
 package com.bootifulmicropizza.service.account.domain;
 
-import org.springframework.security.core.GrantedAuthority;
+import javax.persistence.*;
+import java.util.Set;
 
-import java.util.Collection;
+@Entity
+public class User extends BaseEntity {
 
-/**
- * {@link org.springframework.security.core.userdetails.User} subclass representing the logged in user.
- */
-public class User extends org.springframework.security.core.userdetails.User {
+    private Long id;
 
-    private String accountId;
+    private String username;
 
-    public User(String accountId, String username, String password, boolean enabled,
-                boolean accountNonExpired, boolean credentialsNonExpired,
-                boolean accountNonLocked, Collection<? extends GrantedAuthority> authorities) {
-        super(username, password, enabled, accountNonExpired, credentialsNonExpired, accountNonLocked, authorities);
-        this.accountId = accountId;
+    private String password;
+
+    private Set<UserRole> roles;
+
+    public User() {
+
     }
 
-    public String getAccountId() {
-        return accountId;
+    public User(String username, String password, final Set<UserRole> roles) {
+        this.username = username;
+        this.password = password;
+        this.roles = roles;
+    }
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    public Set<UserRole> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<UserRole> roles) {
+        this.roles = roles;
     }
 }

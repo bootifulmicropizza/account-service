@@ -1,8 +1,8 @@
 package com.bootifulmicropizza.service.account.rest;
 
-import com.bootifulmicropizza.service.account.domain.Account;
-import com.bootifulmicropizza.service.account.domain.Customer;
+import com.bootifulmicropizza.service.account.domain.*;
 import com.bootifulmicropizza.service.account.repository.CustomerRepository;
+import com.bootifulmicropizza.service.account.repository.UserRepository;
 import com.bootifulmicropizza.service.account.rest.request.CreateCustomerRequest;
 import com.bootifulmicropizza.service.account.rest.request.UpdateCustomerRequest;
 import org.springframework.http.MediaType;
@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -23,17 +24,21 @@ import java.util.List;
 @RequestMapping(value = "/customers", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 public class CustomerRestController {
 
+    private UserRepository userRepository;
+
     private CustomerRepository customerRepository;
 
     private PasswordEncoder bCryptPasswordEncoder;
 
-    public CustomerRestController(final CustomerRepository customerRepository,
+    public CustomerRestController(final UserRepository userRepository,
+                                  final CustomerRepository customerRepository,
                                   final PasswordEncoder bCryptPasswordEncoder) {
+        this.userRepository = userRepository;
         this.customerRepository = customerRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
-    @PreAuthorize("hasAuthority('ACCOUNT_READ')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACCOUNT_READ')")
     @GetMapping("/")
     public ResponseEntity<List<Customer>> getCustomers() {
         final List<Customer> customers = new ArrayList<>();
@@ -42,10 +47,10 @@ public class CustomerRestController {
         return ResponseEntity.ok(customers);
     }
 
-    @PreAuthorize("hasAuthority('ACCOUNT_READ')")
-    @GetMapping("/{id}/")
-    public ResponseEntity<Customer> getCustomer(@PathVariable("id") final Long id) {
-        final Customer customer = customerRepository.findOne(id);
+    @PreAuthorize("(authentication.details.decodedDetails['customer_number'] == #customerNumber) or hasRole('ADMIN') or hasAuthority('ACCOUNT_READ')")
+    @GetMapping("/{customerNumber}/")
+    public ResponseEntity<Customer> getCustomer(@PathVariable("customerNumber") final String customerNumber) {
+        final Customer customer = customerRepository.findOne(customerNumber);
 
         if (customer == null) {
             return ResponseEntity.notFound().build();
@@ -54,52 +59,40 @@ public class CustomerRestController {
         return ResponseEntity.ok(customer);
     }
 
-    @PreAuthorize("hasAuthority('ACCOUNT_READ')")
-    @GetMapping("/by-customer-number/{customerNumber}/")
-    public ResponseEntity<Customer> getCustomerByCustomerNumber(@PathVariable("customerNumber") final String customerNumber) {
-        final Customer customer = customerRepository.findByCustomerNumber(customerNumber);
-
-        if (customer == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok(customer);
-    }
-
-    @PreAuthorize("hasAuthority('ACCOUNT_WRITE')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACCOUNT_WRITE')")
     @PostMapping("/")
     public ResponseEntity<Customer> createCustomer(@RequestBody final CreateCustomerRequest request) {
         Assert.notNull(request.getFirstName(), "First name is required");
         Assert.notNull(request.getLastName(), "Last name is required");
         Assert.notNull(request.getEmailAddress(), "Email address is required");
-        Assert.notNull(request.getUsername(), "Username is required");
-        Assert.notNull(request.getPassword(), "Password is required");
+        Assert.notNull(request.getAddress(), "Address is required");
+        Assert.notNull(request.getPayments(), "Payments are required");
 
         if (userAlreadyExists(request.getUsername())) {
             return ResponseEntity.badRequest().build();
         }
 
-        final Account account = new Account();
+        final User user = new User(request.getUsername(), bCryptPasswordEncoder.encode(request.getPassword()),
+                             Collections.singleton(new UserRole(Role.ROLE_CUSTOMER)));
 
-        final Customer customer = new Customer(request.getFirstName(), request.getLastName(), request.getEmailAddress(),
-                                         request.getUsername(), bCryptPasswordEncoder.encode(request.getPassword()), account);
+        final Customer customer =
+            new Customer(user, request.getFirstName(), request.getLastName(), request.getEmailAddress(), new Address(),
+                         Collections.emptySet());
 
         final Customer savedCustomer = customerRepository.save(customer);
 
-        return ResponseEntity
-            .created(URI.create("/customers/" + savedCustomer.getId() + "/"))
-            .body(savedCustomer);
+        return ResponseEntity.created(URI.create("/customers/" + savedCustomer.getCustomerNumber() + "/")).body(savedCustomer);
     }
 
-    @PreAuthorize("hasAuthority('ACCOUNT_WRITE')")
-    @PutMapping("/{id}/")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACCOUNT_WRITE')")
+    @PutMapping("/{customerNumber}/")
     public ResponseEntity<Customer> updateCustomer(@RequestBody final UpdateCustomerRequest request,
-                                                   @PathVariable("id") final Long id) {
+                                                   @PathVariable("customerNumber") final String customerNumber) {
         Assert.notNull(request.getFirstName(), "First name is required");
         Assert.notNull(request.getLastName(), "Last name is required");
         Assert.notNull(request.getEmailAddress(), "Email address is required");
 
-        final Customer customer = customerRepository.findOne(id);
+        final Customer customer = customerRepository.findOne(customerNumber);
 
         if (customer == null) {
             return ResponseEntity.notFound().build();
@@ -114,14 +107,15 @@ public class CustomerRestController {
         return ResponseEntity.ok().body(updatedCustomer);
     }
 
-    @DeleteMapping("/{id}/")
-    public ResponseEntity<Customer> deleteCustomer(@PathVariable final Long id) {
-        customerRepository.delete(id);
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ACCOUNT_WRITE')")
+    @DeleteMapping("/{customerNumber}/")
+    public ResponseEntity<Customer> deleteCustomer(@PathVariable final String customerNumber) {
+        customerRepository.delete(customerNumber);
 
         return ResponseEntity.noContent().build();
     }
 
     private boolean userAlreadyExists(final String username) {
-        return customerRepository.findByUsernameIgnoreCase(username) != null;
+        return userRepository.findByUsernameIgnoreCase(username) != null;
     }
 }

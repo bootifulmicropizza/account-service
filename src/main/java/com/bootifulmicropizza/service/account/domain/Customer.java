@@ -1,11 +1,9 @@
 package com.bootifulmicropizza.service.account.domain;
 
-
 import javax.persistence.*;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Customer entity.
@@ -13,9 +11,9 @@ import java.util.stream.Stream;
 @Entity
 public class Customer extends BaseEntity {
 
-    private Long id;
-
     private String customerNumber;
+
+    private User user;
 
     private String firstName;
 
@@ -23,48 +21,41 @@ public class Customer extends BaseEntity {
 
     private String emailAddress;
 
-    private String username;
+    private Address address;
 
-    private String password;
-
-    private boolean active;
-
-    private Set<UserRole> roles;
-
-    private Account account;
+    private Set<Payment> payments = new HashSet<>();
 
     public Customer() {
 
     }
 
-    public Customer(final String firstName, final String lastName, final String emailAddress, final String username, final String password, final Account account) {
+    public Customer(final User user, final String firstName, final String lastName, final String emailAddress,
+                    final Address address, final Set<Payment> payments) {
+        this.user = user;
         this.customerNumber = UUID.randomUUID().toString();
         this.firstName = firstName;
         this.lastName = lastName;
         this.emailAddress = emailAddress;
-        this.username = username;
-        this.password = password;
-        this.active = true;
-        this.roles = Stream.of(new UserRole(Role.ROLE_CUSTOMER)).collect(Collectors.toSet());
-        this.account = account;
+        this.address = address;
+        this.payments = payments;
     }
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public String getCustomerNumber() {
         return customerNumber;
     }
 
     public void setCustomerNumber(String customerNumber) {
         this.customerNumber = customerNumber;
+    }
+
+    @OneToOne(cascade = CascadeType.ALL)
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public String getFirstName() {
@@ -91,45 +82,21 @@ public class Customer extends BaseEntity {
         this.emailAddress = emailAddress;
     }
 
-    public String getUsername() {
-        return username;
+    @OneToOne(cascade = CascadeType.ALL)
+    public Address getAddress() {
+        return address;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
+    public void setAddress(Address address) {
+        this.address = address;
     }
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    public Set<UserRole> getRoles() {
-        return roles;
+    public Set<Payment> getPayments() {
+        return payments;
     }
 
-    public void setRoles(Set<UserRole> roles) {
-        this.roles = roles;
-    }
-
-    @OneToOne(cascade = CascadeType.ALL)
-    public Account getAccount() {
-        return account;
-    }
-
-    public void setAccount(Account account) {
-        this.account = account;
+    public void setPayments(Set<Payment> payments) {
+        this.payments = payments;
     }
 }

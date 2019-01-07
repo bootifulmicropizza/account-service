@@ -22,7 +22,7 @@ public class Address extends BaseEntity implements Serializable {
 
     private String town;
 
-    private String country;
+    private String county;
 
     private String postCode;
 
@@ -30,13 +30,13 @@ public class Address extends BaseEntity implements Serializable {
 
     }
 
-    public Address(String buildingName, String buildingNumber, String street, String town, String country,
+    public Address(String buildingName, String buildingNumber, String street, String town, String county,
                    String postCode) {
         this.buildingName = buildingName;
         this.buildingNumber = buildingNumber;
         this.street = street;
         this.town = town;
-        this.country = country;
+        this.county = county;
         this.postCode = postCode;
     }
 
@@ -82,12 +82,12 @@ public class Address extends BaseEntity implements Serializable {
         this.town = town;
     }
 
-    public String getCountry() {
-        return country;
+    public String getCounty() {
+        return county;
     }
 
-    public void setCountry(String country) {
-        this.country = country;
+    public void setCounty(String county) {
+        this.county = county;
     }
 
     public String getPostCode() {
