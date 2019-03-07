@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
       - name: account-service
-        image: iancollington/bootifulmicropizza_account-service
+        image: <replaced_at_deploy_time>
         imagePullPolicy: Always
         env:
           - name: BOOTIFUL_MICRO_PIZZA_ENV

@@ -4,6 +4,9 @@ metadata:
   name: account-service
   labels:
     app: account-service
+  annotations:
+    prometheus.io/path: /actuator/prometheus                                                                                                                                                                                                                                 │
+    prometheus.io/scrape: "true"
 spec:
   ports:
   - port: 9005

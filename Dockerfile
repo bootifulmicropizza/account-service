@@ -1,4 +1,4 @@
-FROM openjdk:8u131-jdk
+FROM openjdk:8u191-jre-alpine3.8
 
 ADD target/account-service.jar /app/dist/account-service.jar
 

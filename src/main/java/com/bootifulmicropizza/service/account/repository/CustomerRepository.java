@@ -1,7 +1,6 @@
 package com.bootifulmicropizza.service.account.repository;
 
 import com.bootifulmicropizza.service.account.domain.Customer;
-import com.bootifulmicropizza.service.account.domain.User;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
 /**
@@ -9,5 +8,4 @@ import org.springframework.data.repository.PagingAndSortingRepository;
  */
 public interface CustomerRepository extends PagingAndSortingRepository<Customer, String> {
 
-    Customer findByUser(User user);
 }
